@@ -1,0 +1,1466 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>题库总览</title>
+  <style>
+    :root {
+      --bg: #f3efe6;
+      --panel: rgba(255, 251, 245, 0.92);
+      --ink: #1a1816;
+      --muted: #5d544d;
+      --accent: #b34a2e;
+      --accent-soft: #ead7c2;
+      --line: #2c241f;
+      --shadow: 0 18px 40px rgba(26, 24, 22, 0.12);
+      --mono: "Courier New", monospace;
+      --serif: "Georgia", "Times New Roman", serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: var(--serif);
+      background:
+        radial-gradient(circle at top left, rgba(179, 74, 46, 0.18), transparent 28%),
+        linear-gradient(135deg, #f7f1e6 0%, #efe6d7 45%, #f8f4ec 100%);
+      min-height: 100vh;
+    }
+
+    .page-shell {
+      width: min(1440px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 24px 0 48px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      border: 2px solid var(--line);
+      background: linear-gradient(135deg, rgba(255,255,255,0.82), rgba(248,239,226,0.92));
+      box-shadow: var(--shadow);
+      padding: 28px;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 12px;
+      border: 1px dashed rgba(44, 36, 31, 0.28);
+      pointer-events: none;
+    }
+
+    .hero-kicker,
+    .mini-title,
+    .stat-label,
+    .control-label,
+    .meta-chip,
+    .pill,
+    .action-btn,
+    .empty-note,
+    .toast,
+    .batch-tag,
+    .analysis-label {
+      font-family: var(--mono);
+    }
+
+    .hero-kicker {
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-size: 12px;
+      margin-bottom: 12px;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(2.6rem, 7vw, 5.6rem);
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+      text-wrap: balance;
+    }
+
+    .hero p {
+      max-width: 820px;
+      margin: 16px 0 0;
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .stat-card {
+      border: 2px solid var(--line);
+      background: rgba(255, 249, 240, 0.8);
+      padding: 14px 16px;
+      min-height: 98px;
+    }
+
+    .stat-label {
+      display: block;
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .stat-value {
+      font-size: clamp(1.5rem, 3.6vw, 2.4rem);
+      line-height: 1;
+      font-weight: 700;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 360px minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+      margin-top: 18px;
+    }
+
+    .sidebar,
+    .content {
+      display: grid;
+      gap: 18px;
+    }
+
+    .panel {
+      border: 2px solid var(--line);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .mini-title {
+      margin: 0 0 14px;
+      font-size: 12px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .control-group {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .control-label {
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+    }
+
+    input,
+    select,
+    button,
+    textarea {
+      width: 100%;
+      border: 2px solid var(--line);
+      border-radius: 0;
+      padding: 12px 14px;
+      font: inherit;
+      background: rgba(255,255,255,0.9);
+      color: var(--ink);
+    }
+
+    input,
+    select,
+    textarea {
+      font-family: var(--mono);
+      font-size: 14px;
+    }
+
+    button {
+      cursor: pointer;
+      background: var(--ink);
+      color: #f8f3ea;
+      transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+    }
+
+    button:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 rgba(26,24,22,0.18);
+    }
+
+    button.secondary {
+      background: transparent;
+      color: var(--ink);
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .button-row.three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .helper {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      padding: 6px 10px;
+      background: var(--accent-soft);
+      border: 1px solid rgba(44, 36, 31, 0.2);
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: end;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .toolbar-left,
+    .toolbar-right {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+    }
+
+    .question-card {
+      position: relative;
+      border: 2px solid var(--line);
+      background: rgba(255,255,255,0.92);
+      padding: 16px;
+      display: grid;
+      gap: 14px;
+      scroll-margin-top: 32px;
+    }
+
+    .question-card.highlight {
+      outline: 4px solid rgba(179, 74, 46, 0.2);
+      background: #fffaf2;
+    }
+
+    .question-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .question-id {
+      font-family: var(--mono);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .question-type {
+      align-self: center;
+      padding: 4px 8px;
+      border: 1px solid rgba(44, 36, 31, 0.24);
+      font-family: var(--mono);
+      font-size: 12px;
+      background: var(--accent-soft);
+    }
+
+    .question-text {
+      margin: 0;
+      font-size: 1.18rem;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+
+    .options {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 8px;
+    }
+
+    .options li {
+      padding: 10px 12px;
+      border-left: 3px solid var(--accent);
+      background: rgba(234, 215, 194, 0.34);
+      font-family: var(--mono);
+      line-height: 1.45;
+      word-break: break-word;
+    }
+
+    .options li.option-answerable {
+      padding: 0;
+      border-left: 0;
+      background: transparent;
+    }
+
+    .option-answerable label {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 12px;
+      border-left: 3px solid var(--accent);
+      background: rgba(234, 215, 194, 0.34);
+      cursor: pointer;
+    }
+
+    .option-answerable label.is-checked {
+      background: rgba(179, 74, 46, 0.2);
+    }
+
+    .option-answerable input {
+      width: auto;
+      margin-top: 2px;
+      padding: 0;
+    }
+
+    .inline-text-answer {
+      min-height: 82px;
+      resize: vertical;
+      line-height: 1.5;
+      margin-top: 4px;
+    }
+
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .meta-chip {
+      font-size: 12px;
+      border: 1px solid rgba(44, 36, 31, 0.18);
+      padding: 5px 8px;
+      color: var(--muted);
+      background: rgba(255,255,255,0.7);
+    }
+
+    .card-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .action-btn {
+      flex: 1 1 120px;
+      padding: 10px 12px;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .action-btn.secondary {
+      background: transparent;
+      color: var(--ink);
+    }
+
+    .analysis-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .analysis-card {
+      border: 2px solid var(--line);
+      padding: 16px;
+      background: rgba(255,255,255,0.78);
+      min-height: 230px;
+    }
+
+    .analysis-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .analysis-title {
+      margin: 0;
+      font-size: 1.1rem;
+    }
+
+    .heat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(18px, 1fr));
+      gap: 6px;
+      margin-top: 14px;
+    }
+
+    .heat-cell {
+      position: relative;
+      aspect-ratio: 1;
+      border: 1px solid rgba(44, 36, 31, 0.24);
+      background: rgba(179, 74, 46, 0.08);
+      overflow: hidden;
+    }
+
+    .heat-cell span {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: rgba(26, 24, 22, 0.82);
+    }
+
+    .analysis-note,
+    .empty-note {
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .batch-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .batch-tag {
+      padding: 6px 8px;
+      font-size: 12px;
+      background: rgba(234, 215, 194, 0.55);
+      border: 1px solid rgba(44, 36, 31, 0.18);
+    }
+
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      padding: 12px 14px;
+      background: var(--ink);
+      color: #f8f3ea;
+      border: 2px solid var(--line);
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      z-index: 30;
+    }
+
+    .toast.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .disclaimer-panel {
+      margin-top: 18px;
+      border-style: solid;
+    }
+
+    .disclaimer-list {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    .disclaimer-list li + li {
+      margin-top: 8px;
+    }
+
+    @media (max-width: 1100px) {
+      .summary-grid,
+      .analysis-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .page-shell {
+        width: min(100vw - 20px, 1440px);
+      }
+
+      .hero,
+      .panel {
+        padding: 16px;
+      }
+
+      .summary-grid,
+      .analysis-grid,
+      .button-row,
+      .button-row.three {
+        grid-template-columns: 1fr;
+      }
+
+      .results-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .field-row {
+        grid-template-columns: 1fr;
+      }
+
+      .question-top,
+      .toolbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-shell">
+    <header class="hero">
+      <div class="hero-kicker">本地静态题库 / 无需服务器</div>
+      <h1>她文娱题库总览</h1>
+      <p>当前页面已将题库直接嵌入 HTML。你可以直接双击打开，按题号跳转、搜索筛选、复制单题，或导出当前筛选结果；所有卡片按题号数字顺序排列，不再出现 seq-1 / seq-11 这种字符串排序问题。</p>
+      <section class="summary-grid" id="summaryGrid"></section>
+    </header>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <section class="panel">
+          <h2 class="mini-title">检索与跳转</h2>
+          <div class="control-group">
+            <label class="control-label" for="searchInput">关键词搜索</label>
+            <input id="searchInput" type="text" placeholder="搜索题干或选项">
+          </div>
+          <div class="control-group">
+            <label class="control-label" for="typeFilter">题型筛选</label>
+            <select id="typeFilter">
+              <option value="all">全部题型</option>
+              <option value="填空题">填空题</option>
+              <option value="选择题">选择题</option>
+              <option value="判断题">判断题</option>
+              <option value="简答题">简答题</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label class="control-label" for="answerStatusFilter">作答状态</label>
+            <select id="answerStatusFilter">
+              <option value="all">全部</option>
+              <option value="answered">只看已答</option>
+              <option value="unanswered">只看未答</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label class="control-label" for="sortOrder">排序方式</label>
+            <select id="sortOrder">
+              <option value="asc">题号升序</option>
+              <option value="desc">题号降序</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label class="control-label" for="jumpInput">按题号跳转</label>
+            <div class="field-row">
+              <input id="jumpInput" type="number" min="1" step="1" placeholder="例如 136">
+              <button id="jumpButton" type="button">跳转</button>
+            </div>
+          </div>
+          <div class="button-row">
+            <button id="resetButton" type="button" class="secondary">重置筛选</button>
+            <button id="copyFilteredButton" type="button">复制当前筛选</button>
+          </div>
+          <div class="helper" id="jumpFeedback">支持按题号快速定位；若目标题目被当前筛选隐藏，会自动重置筛选后跳转。</div>
+        </section>
+
+        <section class="panel">
+          <h2 class="mini-title">导出结果</h2>
+          <div class="button-row three">
+            <button id="exportJsonButton" type="button">导出 JSON</button>
+            <button id="exportCsvButton" type="button">导出 CSV</button>
+            <button id="exportTxtButton" type="button">导出 TXT</button>
+          </div>
+          <p class="helper">导出的是当前筛选后的结果，便于单独分析某一类题。</p>
+        </section>
+
+        <section class="panel">
+          <h2 class="mini-title">作答与答案导入导出</h2>
+          <div class="pill-row" id="answerSummary"></div>
+          <div class="button-row three">
+            <button id="exportAnswerBookButton" type="button">导出答案簿</button>
+            <button id="exportApiAnswersButton" type="button">导出当前筛选作答</button>
+            <button id="clearAnswersButton" type="button" class="secondary">清空作答</button>
+          </div>
+          <div class="control-group" style="margin-top:14px;">
+            <label class="control-label" for="answerImportInput">导入答案 JSON</label>
+            <input id="answerImportInput" type="file" accept="application/json,.json">
+          </div>
+          <p class="helper">支持三种导入格式：按题号的答案簿、`entries` 数组、或 `{ questions, answers }` 这种接口对照格式。选择/判断题会存成 0 基索引数组，填空/简答题会存成字符串。</p>
+        </section>
+
+        <section class="panel">
+          <h2 class="mini-title">题型概览</h2>
+          <div class="pill-row" id="typeSummary"></div>
+        </section>
+
+        <section class="panel">
+          <h2 class="mini-title">批次热力分析</h2>
+          <p class="helper" id="analysisStatus"></p>
+          <div class="button-row" style="margin-bottom:14px;">
+            <button id="calculateHeatmapButton" type="button">计算热力分布图</button>
+            <button id="clearHeatmapButton" type="button" class="secondary">清空热力图</button>
+          </div>
+          <div class="control-group">
+            <label class="control-label" for="rawBatchInput">导入原始批次 JSON（可选）</label>
+            <input id="rawBatchInput" type="file" accept="application/json,.json">
+          </div>
+          <div class="helper">当前工作区没有保存题目与批次的对应历史，所以无法直接算出某题出现了几次、出现在哪些批次。如果你之后拿到原始批次记录，可以直接在这里导入，然后点击“计算热力分布图”。</div>
+        </section>
+      </aside>
+
+      <main class="content">
+        <section class="panel">
+          <div class="toolbar">
+            <div class="toolbar-left">
+              <h2 class="mini-title" style="margin:0">题目列表</h2>
+              <span class="pill" id="resultPill"></span>
+            </div>
+            <div class="toolbar-right">
+              <span class="pill" id="sortPill"></span>
+            </div>
+          </div>
+          <div class="results-grid" id="resultsGrid"></div>
+        </section>
+
+        <section class="panel">
+          <h2 class="mini-title">分析面板</h2>
+          <div class="analysis-grid">
+            <article class="analysis-card">
+              <div class="analysis-head">
+                <h3 class="analysis-title">当前题目出现频率</h3>
+                <span class="pill" id="analysisQuestionId">未选中题目</span>
+              </div>
+              <div class="analysis-note" id="analysisSummary">点击任意题目卡片上的“查看分析”后，这里会展示它的出现频率与来源批次。</div>
+              <div class="heat-grid" id="heatGrid"></div>
+            </article>
+            <article class="analysis-card">
+              <div class="analysis-head">
+                <h3 class="analysis-title">来源批次</h3>
+                <span class="pill" id="analysisBatchCount">0 个批次</span>
+              </div>
+              <div class="analysis-note" id="analysisDetail">当前没有可用于计算的原始批次记录。现有文件只有去重后的题库和总请求状态。</div>
+              <div class="batch-list" id="batchList"></div>
+            </article>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <section class="panel disclaimer-panel">
+      <h2 class="mini-title">免责声明与使用边界</h2>
+      <ol class="disclaimer-list">
+        <li>本人不支持任何激进女权主义言论、极端性别对立叙事、煽动仇恨性表达及相关意识形态主张，也不认同任何借技术研究之名传播、放大或包装上述内容的行为。</li>
+        <li>对本网站、本页面、本题库、本地采集脚本、答案整理功能、热力分析功能及相关研究结果的任何使用，均应严格限定在中华人民共和国现行法律、行政法规、司法解释及监管要求允许的范围内进行。</li>
+        <li>本测试题库、批次记录、答案导入导出能力、页面分析能力及相关衍生文件，仅用于网络安全研究、漏洞验证、漏洞汇报、合规审计、接口行为分析、数据结构研究、证据留存与内部技术复核，不得用于任何违法违规用途。</li>
+        <li>严禁利用本工具或相关数据从事未授权访问、批量攻击、绕过限制、破坏数据、骚扰运营方、传播争议内容、制造舆情风险、侵犯他人合法权益或其他违反法律法规及公序良俗的行为。</li>
+        <li>如需对目标系统开展进一步测试、复现或验证，应确保测试行为具备明确授权、范围边界、责任归属与留痕记录；如超出授权范围，应立即停止并改为通过正式渠道进行合规汇报。</li>
+        <li>任何人使用本页面或相关输出结果，均视为已理解并同意上述限制；若使用行为违反中华人民共和国有关法律法规或超出授权研究边界，相关责任由实际使用者自行承担。</li>
+      </ol>
+    </section>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const QUIZ_DATA = {"total_unique_questions": 182, "questions": [{"id": 1, "question": "【填空】\"学长/师长\"为中性词，若要特指男性前辈，应当称呼其为：________。（写一种即可）", "options": []}, {"id": 10, "question": "【填空】形容母亲与女儿的关系也可称为____。", "options": []}, {"id": 100, "question": "【不定项】以下哪些哲学家厌女？", "options": ["A. 尼采", "B. 叔本华", "C. 柏拉图", "D. 亚里士多德"]}, {"id": 104, "question": "胖猫全名____", "options": []}, {"id": 105, "question": "南京红叔全名___", "options": []}, {"id": 106, "question": "胖猫的原名是刘乙吗？", "options": ["是", "否"]}, {"id": 108, "question": "-“在九位最高法院大法官中，要有几位女性才足够？”\n-“___位。”", "options": []}, {"id": 109, "question": "兰州铁路无卫生巾事件中，一条床单索赔___元", "options": []}, {"id": 11, "question": "【不定项】关于长辈、师傅的称呼，以下说法正确的是？", "options": ["A. \"师母/师姥\"可以作为中性词", "B. \"师父\"特指男性长辈", "C. \"师父\"可指女性长辈", "D. \"师母\"特指师尊的爱人"]}, {"id": 115, "question": "题目：女娲从____变成____，是父权取代母权后，为削弱其独立创世神地位而做的形象改造。", "options": []}, {"id": 118, "question": "女性是一种视角，更是一种处境，把男性放在女性的处境下，男人就成了女人。", "options": ["是", "否"]}, {"id": 119, "question": "建筑师林徽因逝世的年份是", "options": []}, {"id": 12, "question": "【填空】\"他\"被设定为中性字，\"她\"特指女性，则特指男性的第三人称代词提倡使用：______。(填一个字的)", "options": []}, {"id": 128, "question": "【不定项】感谢您", "options": ["使用卫生巾", "不乱丢烟头"]}, {"id": 129, "question": "【不定项】部分人士反对“忮忌”等词的普及使用，以下哪些选项可以解释牠们的心理活动？", "options": ["认为反对就表明自己投诚了", "不知道“忮”字，耻于承认文化水平较低", "固步自封，害怕进步带来的变动", "“男百合”“母父（男）”等词够用了"]}, {"id": 13, "question": "【填空】形容母亲与男儿的关系应当使用：________。", "options": []}, {"id": 130, "question": "秋瑾是近代中国第一个敢于以武装斗争夺取权力的英雌革命家", "options": ["是", "否"]}, {"id": 131, "question": "【不定项】为女性做心肺复苏时应怎么定位最准确", "options": ["两乳头连线中点处", "胸骨下三分之一处", "剑突上两横指"]}, {"id": 132, "question": "【不定项】灵长三杰是哪三位女士", "options": ["Jane Goodall（珍.古道尔）", "Dian fossey（戴安.福西）", "Nancy Grace Roman（南希.格雷斯.罗曼）", "Biruté Galdikas（比鲁特.加尔迪卡斯）"]}, {"id": 134, "question": "【不定项】以下哪项语言习惯最符合“男本位”特征，且常被女本位视角批判？", "options": ["使用“他们”指代未知性别的群体", "使用“人类”作为物种统称", "使用“他”作为语法上的默认第三人称", "使用“她”专门指代女性作家"]}, {"id": 135, "question": "【不定项】冰心与林徽因的关系", "options": ["知己", "对手"]}, {"id": 136, "question": "互联网上有位对于服弱役讨论非常彻底的女士，她的思想被广泛传播且支持，她的名字是____。", "options": []}, {"id": 139, "question": "女权主义旨在包容一切生理性别为女的女人。", "options": ["是", "否"]}, {"id": 14, "question": "【不定项】坚决抵制将职业变成男本位词汇，因此以下职业称谓需要抵制的是？", "options": ["A. 外卖小哥", "B. 警察叔叔", "C. 快递员", "D. 农民伯伯"]}, {"id": 140, "question": "【不定项】哪些词更适合做出贡献的女性", "options": ["英雌", "巾帼", "以上都是", "其她"]}, {"id": 141, "question": "说句___道话", "options": []}, {"id": 142, "question": "___心壮志", "options": []}, {"id": 143, "question": "【不定项】世界上第一位驾驶员是", "options": ["贝瑞塔•本茨", "卡尔•本茨"]}, {"id": 144, "question": "请写出一个对攻击女无耽美读者/作者的称呼", "options": []}, {"id": 145, "question": "请指出以下文本有几处常识错误（填写数字）：小明的父母和她在公园玩时，她想去公厕，公厕设有男女两种厕所，于是小明去了右边的女厕所。", "options": []}, {"id": 148, "question": "【不定项】以下神祇中，哪些被篡改降位夺权？", "options": ["羲和（太阳神）", "九天玄女", "女娲", "恒我"]}, {"id": 15, "question": "【填空】称呼母亲和父亲时，应用词汇：________。（两个字）", "options": []}, {"id": 153, "question": "【不定项】以下哪些角色可能是女性？", "options": ["孙悟空", "尧舜", "大禹", "仓颉"]}, {"id": 154, "question": "【不定项】 2026年的女性开年神贴包括？", "options": ["赘婿", "养狗", "阴阳", "忮忌"]}, {"id": 158, "question": "【不定项】从独立女神到后羿之妻，她从月神“恒我”到“嫦娥”的演变中，下列说法错误的是？", "options": ["恒我是先秦更原始的月神形象", "从恒我到嫦娥，女神的自主性和地位被不断抬高", "恒我原本多为独立女神形象，后被附会为后羿之妻", "奔月情节从自主求长生，被改写为窃药私奔，是对女神形象的美化"]}, {"id": 16, "question": "【填空】网络用语\"金主爸爸\"应改为\"________\"", "options": []}, {"id": 164, "question": "根据卵细胞的职能，它更应该被称作___?", "options": []}, {"id": 165, "question": "母系本源字是___。", "options": []}, {"id": 166, "question": "【不定项】如果你不打算怀孕，但希望享受性体验，女性最主要的快感来源是 ______，阴道插入可能伴随 ______ 风险。全球仅有约 ______ 的女性能够单靠阴道插入获得高潮。", "options": ["阴蒂高潮，无风险，所有女性都能", "阴道高潮，怀孕，20%-30%", "阴蒂高潮，怀孕和感染，20%-30%", "阴道高潮，感染，50%"]}, {"id": 168, "question": "中国第一篇白话小说是鲁迅的《狂人日记》。", "options": ["是", "否"]}, {"id": 17, "question": "【填空】雌竞一词应替换为____堕（填一个字）", "options": []}, {"id": 171, "question": "《丹妮斯的重生》里，丹妮斯上一世的名字是被某人借用并改成了___。", "options": []}, {"id": 172, "question": "【不定项】三妇合评牡丹亭指的是哪三妇？", "options": ["陈同", "王和", "钱宜", "谈则"]}, {"id": 175, "question": "【不定项】发现温室效应并预言全球变暖却被男人嘲讽的是", "options": ["玛特·戈蒂耶（Marthe Gautier）", "尤妮斯·纽顿·富特（Eunice Newton Foote）", "玛丽亚·特尔克斯（Maria Telkes）", "米尔德丽德·德雷塞尔豪斯（Mildred Dresselhaus）"]}, {"id": 18, "question": "【不定项】介绍异性恋伴侣关系时，必须遵循的原则是？", "options": ["A. 可以男在前，女在后", "B. 必须女在前，男在后", "C. 倡导冠夫姓，如\"顾先生和顾太太\"", "D. 倡导冠妻姓，如\"顾女士和顾姑爷\""]}, {"id": 181, "question": "中国第一篇现代白话小说是《____》", "options": []}, {"id": 184, "question": "拒绝贬女词，“嫌弃”一词中的“嫌”字可以用__代替", "options": []}, {"id": 185, "question": "“公”原意是公平、公正等，本不指代性别，后被男性拿去给牠们赋魅，为了让“公”恢复原来的含义，可以将“公”替换为（   ）", "options": []}, {"id": 19, "question": "【填空】形容女子如乔木般高大的字是：________。", "options": []}, {"id": 2, "question": "【不定项】传统语境里的\"徒弟\"为男本位，现在它的词性发生了变化。以下对应恰当正确的是？", "options": ["A. 中性词：徒子 / 徒儿", "B. 特指女性：徒妹", "C. 特指男性：徒弟", "D. 特指女性：女徒弟"]}, {"id": 20, "question": "【填空】词汇的\"女词男用\"：形容男性极度唠叨，不应该用贬低女性的\"婆婆妈妈\"，而应该替换为：________不休。", "options": []}, {"id": 201, "question": "“梁上君子”林徽因，新中国建筑学的开山鼻祖之一，一位伟大的建筑学家，如今我们常用____来称呼她。", "options": []}, {"id": 203, "question": "【不定项】以下哪些是她娱想邀请入驻的女无作者：", "options": ["妚鹤", "别山去", "桉柏", "鸣蒂"]}, {"id": 204, "question": "汉文帝时期的馆陶公主其名中的“___”字便是美好的祝愿，希望她能够如风一般轻盈、聪慧。（单个字，女部首，形容轻盈、敏捷、迅速。）", "options": []}, {"id": 207, "question": "妚鹤笔名的英文含义是___（全小写即可）", "options": []}, {"id": 21, "question": "【填空】男性国王被叫作____。", "options": []}, {"id": 216, "question": "____隶的正确写法是", "options": []}, {"id": 218, "question": "【不定项】“恶毒”一词中的“毒”带有性别贬义。下列选项中，去性别贬义化，并和原意相同的替换词是？", "options": ["恶螙", "恶蠹", "恶髑", "恶殬"]}, {"id": 22, "question": "【填空】厷人至死是________。", "options": []}, {"id": 226, "question": "伍尔夫更乐意别人叫自己为____", "options": []}, {"id": 229, "question": "【不定项】以下为女性作家创作及作品匹配无误的选项是", "options": ["艾丽斯沃克《紫颜色》", "弗吉尼亚伍尔夫《一间自己的房间》", "珍妮特温特森《橘子不是唯一的水果》", "厄休拉·勒古恩《寻获与失落》"]}, {"id": 23, "question": "【不定项】以下哪些词汇创建时被用于对激进女权主义者的污名化？", "options": ["A. 女爹", "B. 碍女解", "C. 腐蟑螂", "D. 自然女"]}, {"id": 239, "question": "看到特别帅的女人就喊她老公是一种对其魅力的认可。", "options": ["是", "否"]}, {"id": 24, "question": "【填空】男性皇帝被叫作____。", "options": []}, {"id": 249, "question": "素媛案应该称呼为___", "options": []}, {"id": 25, "question": "【填空】纳入式是________行为，而不是________行为。（按顺序填入并用,分割）", "options": []}, {"id": 250, "question": "燕大硕士被拐案的犯罪者，被警方通报为“化拐为留”，最后被放过的是山西省晋中市和顺县的_____", "options": []}, {"id": 26, "question": "【不定项】以下哪些词汇属于辱女词或未经替换的污名化词汇，不恰当？", "options": ["A. 婊子", "B. 屌子", "C. 妓子", "D. 娇妻"]}, {"id": 265, "question": "【不定项】“巾帼”最早指代人的典故指的是？", "options": ["古代头饰，秦汉时期女男均可佩戴，汉代成为女性专属装饰", "三国时期诸葛亮赠司马懿巾帼，讽刺其怯战", "对古代杰出女性的尊称"]}, {"id": 27, "question": "【不定项】在形容男性气质或行为时，以下哪些词汇使用了辱女或男本位逻辑，不恰当？", "options": ["A. 娘娘腔", "B. 爹爹腔", "C. 婆婆妈妈", "D. 爷们唧唧"]}, {"id": 272, "question": "【不定项】因男本位医学，在糖尿病等770种不同疾病中，女性平均被延迟诊断的时间是？", "options": ["4周", "4月", "4年"]}, {"id": 278, "question": "恶du的du最好改成哪个__", "options": []}, {"id": 28, "question": "【不定项】在日常表达运气不好或占便宜时，以下哪些词汇带有厌女色彩，不恰当？", "options": ["A. 白嫖", "B. 白剽", "C. 倒霉", "D. 晦气"]}, {"id": 29, "question": "【不定项】可以使用以下哪些词汇？", "options": ["A. 长舌妇", "B. 泼妇", "C. 怨妇", "D. 厷夜叉"]}, {"id": 291, "question": "【不定项】请选出褒义词：", "options": ["圣母", "白莲花", "名媛", "嫖姚"]}, {"id": 293, "question": "香香软软的小蛋糕是对女性可爱，表达自身喜爱的一种无害赞美。", "options": ["是", "否"]}, {"id": 294, "question": "唐群英在国民党成立大会上扇了谁一巴掌____？", "options": []}, {"id": 299, "question": "【不定项】请选择下列的中性词：", "options": ["儿子", "侄子", "学长", "少年"]}, {"id": 3, "question": "【填空】如果特指男性同辈，不使用\"兄弟\"一词，而应当使用：________。", "options": []}, {"id": 30, "question": "【不定项】在评价家庭或婚恋关系里的男性时，以下哪些词汇属于男本位或掩盖了其吸血本质，不恰当？", "options": ["A. 凤凰男", "B. 蚂蝗男", "C. 水蛭男", "D. 伏弟魔"]}, {"id": 301, "question": "为追求性别平等，文学创作中应更多描写男性主动追求、深陷爱情的情节，鼓励其成为嗲夫、贤夫。", "options": ["是", "否"]}, {"id": 304, "question": "“王子”是中性词", "options": ["是", "否"]}, {"id": 307, "question": "【不定项】选出女本位表达（女本位：女性为人类默认值）", "options": ["少年少女", "王子王男", "生儿生男", "少男少女"]}, {"id": 31, "question": "【不定项】文艺与医学领域名词中，以下哪些词汇不恰当？", "options": ["A. 处女作", "B. 开山作", "C. 处女膜", "D. 阴道瓣"]}, {"id": 310, "question": "【不定项】《她来劈开这山》属于哪一类文学作品？", "options": ["言情小说", "童话故事", "现实主义小说", "人物传记"]}, {"id": 312, "question": "卫生棉条在使用过程中，连续使用不能超过_小时", "options": []}, {"id": 313, "question": "大号月经碟适用于低宫颈的女性", "options": ["是", "否"]}, {"id": 32, "question": "【不定项】流行语与社会现象中，以下哪些词汇是不恰当的？", "options": ["A. 奶头乐", "B. 龟头乐", "C. 雌竞", "D. 虜竞"]}, {"id": 320, "question": "______发现了钋（以她的祖国波兰命名）和镭，开创了放射性研究这一全新科学领域，并为此领域奠定了理论和实践基础。她的工作彻底改变了现代物理学和化学，并对医学产生了革命性影响。", "options": []}, {"id": 322, "question": "【不定项】以下言论中不正确的是？", "options": ["化妆可以取悦自己。", "女人有变美的自由。", "每个女人都是美丽的。", "女人无需美貌。"]}, {"id": 325, "question": "梦露的名字还可以翻译成____（两个字）", "options": []}, {"id": 326, "question": "【不定项】以下称呼中，可以用来称呼女性表达善意的是？", "options": ["大姐", "媎妹", "阿姨", "sis"]}, {"id": 33, "question": "【不定项】以下口头禅与感叹词中，哪些带有屌本位插入逻辑或男本位含义，不恰当？", "options": ["A. 哇塞", "B. 哇咔咔", "C. 我勒个豆", "D. 哇哦"]}, {"id": 331, "question": "休言女子非英物，夜夜龙泉壁上鸣。的作者是______", "options": []}, {"id": 336, "question": "【不定项】神龙政变时，都有哪些人参与了逼宫武皇？", "options": ["太平公主", "上官婉儿", "李显", "李旦"]}, {"id": 34, "question": "【不定项】以下哪些词汇不恰当？", "options": ["A. 谄媚", "B. 嫌弃", "C. 嫁祸", "D. 奴婢"]}, {"id": 341, "question": "在古代 ，会写女书的女子被称为＿", "options": []}, {"id": 346, "question": "辛亥双璧是指秋瑾和_______", "options": []}, {"id": 35, "question": "【不定项】繁衍的词汇中，以下哪些词汇是在刻意抬高男性地位、抹杀卵子主体性，不恰当？", "options": ["A. 精子", "B. 配子", "C. 受精卵", "D. 狩廉卵"]}, {"id": 357, "question": "【不定项】以下哪个“世界上第一个……”成就属于女性？", "options": ["世界上第一本科幻小说《弗兰肯斯坦》", "世界上第一个作家", "世界上第一本长篇小说《源氏物语》", "世界上第一个程序员"]}, {"id": 359, "question": "【不定项】薛涛改良造纸工艺，创新的信笺，称＿", "options": ["薛涛笺", "浣溪笺", "松花笺", "红笺"]}, {"id": 36, "question": "【不定项】以下哪些词汇暗含了贬低女性或将女性视为外人的意思，不恰当？", "options": ["A. 妇人之仁", "B. 女流之辈", "C. 外婆", "D. 姥姥"]}, {"id": 360, "question": "女性的成就很容易被忽略、贬低、除名或被归于男性，这个现象叫做______效应", "options": []}, {"id": 362, "question": "女性身体的进化度优于男性，进化出了“性”和“生殖”两套系统，其中与“性”相关的器官叫____。", "options": []}, {"id": 363, "question": "上古八大姓＿均带有“女”字旁，起源于母系氏族社会（写出上古八大姓任意一个）", "options": []}, {"id": 365, "question": "对同辈的孩子的称呼侄女、侄男可替换的写法＿（写一个即可）", "options": []}, {"id": 367, "question": "【不定项】根据最高法2016–2019年全国法院一审交通肇事案数据，刑事交通肇事罪中女司机和男司机的犯罪占比，哪个选项更贴近现实？", "options": ["女司机37.8%，男司机62.2%", "女司机5.4%，男司机94.6%", "女司机94.6%，男司机5.4%", "女司机62.2%，男司机37.8%"]}, {"id": 368, "question": "【不定项】以下哪些服装属于“男装”？", "options": ["西装", "马面裙", "喉结罩", "皮鞋"]}, {"id": 37, "question": "【不定项】以下哪些词汇不恰当需要被替换？", "options": ["A. 化妆", "B. 恶露", "C. 姨妈巾", "D. 卫生巾"]}, {"id": 371, "question": "【不定项】选出女性可能擅长的内容", "options": ["文科", "理科", "开车", "摄影"]}, {"id": 375, "question": "【不定项】女权主义将㽖权大致分为传统㽖权和自由㽖权，下面哪些现象代表的是自由㽖权", "options": ["限制女性的人身自由与社交权利", "宣扬“性解放”，“爱情至上”", "用贞洁、贤淑、温柔等道德标准束缚女性行为", "给㽖赋魅，创作虚构的“好㽖人”形象"]}, {"id": 377, "question": "【不定项】 6b4t的主张中，包含以下哪些：", "options": ["单女互助", "不与男约会、不结婚（不造夫）、不生男（不造父）", "争财产、争继承权", "抵制忤女产品"]}, {"id": 38, "question": "【不定项】以下贬义词中，哪些带有对女性器官的污名化，不恰当？", "options": ["A. 装B", "B. 傻屌", "C. SB", "D. 事屌"]}, {"id": 382, "question": "【不定项】游戏《the big con》的正确中文译名应该是：", "options": ["诈欺娇娃", "大欺诈师", "大骗局", "干票大的"]}, {"id": 383, "question": "《Tomb Raider》的中文译名“古墓丽影”是难得汉化正确的游戏。", "options": ["是", "否"]}, {"id": 39, "question": "【不定项】以下哪些网络流行词或俗语贬低了女性，不恰当？", "options": ["A. 金主爸爸", "B. 太娘们了", "C. 金主妈妈", "D. 老爹子"]}, {"id": 4, "question": "【不定项】关于\"老板\"这一称呼的性别化指代，以下提倡使用的是？", "options": ["A. 老板", "B. 老板娘", "C. 老板爹", "D. 女老板"]}, {"id": 40, "question": "【不定项】面对特定职业，以下哪些称呼固化了性别刻板印象，不恰当？", "options": ["A. 警察叔叔", "B. 外卖小哥", "C. 农民伯伯", "D. 护士姐姐"]}, {"id": 41, "question": "【不定项】在评价情绪的贬义表达中，以下哪些词汇是不恰当的？", "options": ["A. 婆婆妈妈", "B. 唧唧歪歪", "C. 逼逼赖赖", "D. 屌屌赖赖"]}, {"id": 42, "question": "【不定项】以下同辈称呼中，哪些应当避免使用？", "options": ["A. 兄弟", "B. 哥弟", "C. 姐妹", "D. 师哥"]}, {"id": 43, "question": "【不定项】以下哪些词汇应该被坚决抵制？", "options": ["A. 女王攻", "B. 女鬼受", "C. 母0", "D. 老嫂子（指代男gay下位）"]}, {"id": 44, "question": "【不定项】以下哪位曾被男性偷走成果？", "options": ["A. 弗洛伦斯·迪克斯", "B. 伊丽莎白·玛姬", "C. 斯科特·菲茨杰拉德", "D. 乔瑟琳·贝尔"]}, {"id": 45, "question": "【不定项】应该坚决抵制：", "options": ["A. 女冠男戴", "B. 女锅男背", "C. 女词男用", "D. 女功男偷"]}, {"id": 46, "question": "【不定项】俗语与成语中，以下哪些是在造谣或贬低女性，不恰当？", "options": ["A. 最毒妇人心", "B. 最毒虏人心", "C. 郎才女貌", "D. 郎才男貌"]}, {"id": 47, "question": "【不定项】在网络词汇中，为了脱离男权生殖崇拜，以下哪些表达是可以使用的？", "options": ["A. 我艹", "B. 骟你爹", "C. 靠北", "D. 去势"]}, {"id": 48, "question": "【不定项】以下哪些词汇带有男权视角的局限性，不恰当？", "options": ["A. 男耕女织", "B. 女织女耕", "C. 婚姻", "D. 嫁娶"]}, {"id": 49, "question": "【不定项】以下哪些说法在女本位视角下被认为是局限的、不恰当的？", "options": ["A. 妇女能顶半边天", "B. 妇女一直能顶天立地", "C. 妇是女人能推倒大山", "D. 女子本弱，为母则刚"]}, {"id": 5, "question": "【填空】古代皇帝定下传位的女性继承人可叫作____。（两个字，写我们最提倡的）", "options": []}, {"id": 50, "question": "【不定项】在批判男性劣根性时，以下哪些词提倡使用？", "options": ["A. 蚂蝗男", "B. 屌子", "C. 爹爹不休", "D. 吸姐怪"]}, {"id": 51, "question": "【填空】表达\"强奸\"这种犯罪行为时，为了体现出施暴者的性别和批判性，应将字形替换为：强____或强歼。", "options": []}, {"id": 52, "question": "【填空】俗语\"最毒妇人心\"是极其恶劣的男权造谣，应被纠正为\"最毒________\"。", "options": []}, {"id": 53, "question": "【填空】当表达运气差时，为了拒绝使用被污名的带有\"女\"字的词汇，\"倒霉\"应写作：________。", "options": []}, {"id": 54, "question": "【填空】网络用语\"青天大老爷\"应替换为：________。", "options": []}, {"id": 55, "question": "【填空】\"谄媚\"应将其替换为：谄____。", "options": []}, {"id": 56, "question": "【填空】\"嫁祸\"一词带有厌女色彩，应当将其替换为：________祸。", "options": []}, {"id": 57, "question": "【填空】婚姻制度的本质是针对女性的，如果不进入婚姻就没有女字旁，因此\"婚姻\"应该写为________。", "options": []}, {"id": 58, "question": "【填空】表达啰嗦、纠缠不清时，\"逼逼赖赖\"应替换为________或弔弔叨叨。", "options": []}, {"id": 59, "question": "【填空】男权取名\"欢乐豆\"暗指女性器官，因此\"我勒个豆\"应替换为：我勒个________/ 我勒个弔。", "options": []}, {"id": 6, "question": "【填空】传统语境里的\"空少\"应为中性词，指代女性时用\"空姐\"，指代男性时应该用：________。", "options": []}, {"id": 60, "question": "【不定项】\"我操\"是阳具中心主义，以下哪些替换词是推荐的？", "options": ["A. 我骟", "B. 靠北", "C. 去势", "D. 密迭的"]}, {"id": 61, "question": "【填空】资本主义社会阶级分化中，\"小姐和少爷\"这种女低男高的辈分不对等称呼应当替换为：小哥和________。", "options": []}, {"id": 62, "question": "【填空】掩盖男性吸血本质的\"凤凰男\"应替换为：蚂蝗男 / ________。", "options": []}, {"id": 63, "question": "【填空】剥削姐姐以供养弟弟的情况应直接称呼该弟弟为：________。", "options": []}, {"id": 64, "question": "【填空】处女膜是男权社会虚构的器官，它的医学学名是：________。", "options": []}, {"id": 65, "question": "【填空】第一次发表的作品不应叫\"处女作\"，除了可替换为\"开山作\"之外，还可以使用对标男性的：________作。", "options": []}, {"id": 66, "question": "【填空】“姨妈巾”包含恶意，应当置换为：________。", "options": []}, {"id": 67, "question": "【填空】\"老天爷\"应当替换为：________。", "options": []}, {"id": 68, "question": "【填空】不花钱获取利益的\"白嫖\"应纠正为：________。（两个字）", "options": []}, {"id": 69, "question": "【填空】男权用来侮辱女性的\"婊子\"，应原封不动地将器官还给他们，改骂为：________子。", "options": []}, {"id": 7, "question": "【填空】表达母系亲属时，不应称\"外\"，因为这暗含了将女性家族视为外人的男权逻辑。因此\"外婆外公\"应当替换为：________或阿婆阿厷。", "options": []}, {"id": 70, "question": "【填空】虚假满足底层需求的\"奶头乐\"其实不符合生物学，应修正为：________乐。", "options": []}, {"id": 71, "question": "【填空】\"化妆\"这个词里的\"妆\"强制绑定女性，该词汇应该替换为：________。", "options": []}, {"id": 72, "question": "【填空】嫖娼应替换为：________。", "options": []}, {"id": 73, "question": "【填空】奴应替换为____。", "options": []}, {"id": 74, "question": "【填空】她的文娱生活成立于____年。", "options": []}, {"id": 75, "question": "【填空】娼应替换为：________。", "options": []}, {"id": 76, "question": "【填空】赞叹极度优秀时用\"________\"，字形如带皇冠的帝王，常用于女本位的褒义和称赞。", "options": []}, {"id": 77, "question": "【填空】女人至死是________。", "options": []}, {"id": 78, "question": "【填空】动词\"骟\"的本意是去势，拼音发音为\"________\"（无需音调）", "options": []}, {"id": 79, "question": "【填空】\"精子\"不配被称为\"精\"，因为数量泛滥，物以稀为贵，应将其替换为：________。（写一种即可）", "options": []}, {"id": 8, "question": "【不定项】当我们要赞美一位极其杰出、英勇的女性时，应使用以下哪些称呼？", "options": ["A. 女英雄", "B. 英雌", "C. 英豪 / 英杰", "D. 先生"]}, {"id": 80, "question": "【填空】可以使用汉字\"____\"（qiao），即割去牲畜生殖器作为语气词使用。", "options": []}, {"id": 81, "question": "【判断】在正式场合介绍已婚伴侣时，出于相互尊重的礼貌，标准的称呼格式应为\"孙先生与孙太太\"。", "options": ["是", "否"]}, {"id": 82, "question": "【判断】尊称德高望重的学术女性（如冰心、杨绛）为\"先生\"，是打破职业性别偏见的优秀做法。", "options": ["是", "否"]}, {"id": 83, "question": "【判断】为了鼓励男性打破阳刚之气的刻板印象，女性可以使用\"娘\"字来夸赞打扮精致的男性。", "options": ["是", "否"]}, {"id": 84, "question": "【判断】一位手艺人收了一名女性作为传人，在日常称呼中应规范使用\"女徒弟\"一词。", "options": ["是", "否"]}, {"id": 85, "question": "【判断】女性之间为了表达情谊深厚、肝胆相照，提倡互称为\"好兄弟\"。", "options": ["是", "否"]}, {"id": 86, "question": "【判断】职场语境下，为了突出女性的主体地位，应统一将女性创业者称为\"女老板\"。", "options": ["是", "否"]}, {"id": 87, "question": "【判断】部分女性主张\"化妆是为了取悦自己\"，这属于打破传统父权压迫的自我修饰，值得鼓励。", "options": ["是", "否"]}, {"id": 88, "question": "【判断】\"女子本弱，为母则刚\"是对女性展现出的母性力量的崇高赞美，可以使用。", "options": ["是", "否"]}, {"id": 89, "question": "【判断】日常用语中，\"外婆\"与\"奶奶\"均属于客观中性且平等的长辈亲属称谓。", "options": ["是", "否"]}, {"id": 9, "question": "【填空】西幻国王的男性继承人们应被称为____（两个字）", "options": []}, {"id": 90, "question": "【判断】异性恋婚姻是男权制度下的虜隶制，保障一个男人有一个自己的仆人。", "options": ["是", "否"]}, {"id": 91, "question": "【填空】\"娇夫\"应被替换为\"________\"", "options": []}, {"id": 92, "question": "【填空】自然界中，多数鹰类中________鹰体型更大，承担筑巢捕猎主要任务并兼具守卫领地的力量。", "options": []}, {"id": 93, "question": "【判断】在校园社交中，\"学长\"是女男通用的中性词。", "options": ["是", "否"]}, {"id": 94, "question": "【不定项】以下哪些表述不合适？", "options": ["A. 我上网就是来看这些的，不是来看对立的", "B. 我比以前漂亮多了，你想见我吗？", "C. 能让自己幸福的人，结婚也幸福", "D. 这不是女性和男性的对立，是正常人与伪人的对立"]}, {"id": 95, "question": "【判断】航空服务业中，我们应使用\"空少\"一词指代男性空中乘务。", "options": ["是", "否"]}, {"id": 96, "question": "【填空】和Bitch对应的形容男性的英文单词是\"________\"", "options": []}, {"id": 97, "question": "【判断】\"儿子\"为中性词。", "options": ["是", "否"]}, {"id": 98, "question": "【填空】最著名的厌女症男画家是：________。", "options": []}, {"id": 99, "question": "【填空】最著名的的厌女的男心理学家是：________。", "options": []}]};
+    const COLLECTION_META = {
+      attempts: 97,
+      successfulAttempts: 97,
+      rawBatchHistoryAvailable: false,
+      reason: "现有文件只保存了去重后的题库和汇总状态，没有保留每一批题目的明细。"
+    };
+
+    const state = {
+      allQuestions: [],
+      filteredQuestions: [],
+      selectedQuestionId: null,
+      answers: new Map(),
+      rawBatchHistory: null,
+      rawBatchIndex: new Map()
+    };
+
+    const elements = {
+      summaryGrid: document.getElementById("summaryGrid"),
+      searchInput: document.getElementById("searchInput"),
+      typeFilter: document.getElementById("typeFilter"),
+      answerStatusFilter: document.getElementById("answerStatusFilter"),
+      sortOrder: document.getElementById("sortOrder"),
+      jumpInput: document.getElementById("jumpInput"),
+      jumpButton: document.getElementById("jumpButton"),
+      jumpFeedback: document.getElementById("jumpFeedback"),
+      resetButton: document.getElementById("resetButton"),
+      copyFilteredButton: document.getElementById("copyFilteredButton"),
+      exportJsonButton: document.getElementById("exportJsonButton"),
+      exportCsvButton: document.getElementById("exportCsvButton"),
+      exportTxtButton: document.getElementById("exportTxtButton"),
+      answerSummary: document.getElementById("answerSummary"),
+      exportAnswerBookButton: document.getElementById("exportAnswerBookButton"),
+      exportApiAnswersButton: document.getElementById("exportApiAnswersButton"),
+      clearAnswersButton: document.getElementById("clearAnswersButton"),
+      answerImportInput: document.getElementById("answerImportInput"),
+      typeSummary: document.getElementById("typeSummary"),
+      analysisStatus: document.getElementById("analysisStatus"),
+      calculateHeatmapButton: document.getElementById("calculateHeatmapButton"),
+      clearHeatmapButton: document.getElementById("clearHeatmapButton"),
+      rawBatchInput: document.getElementById("rawBatchInput"),
+      resultPill: document.getElementById("resultPill"),
+      sortPill: document.getElementById("sortPill"),
+      resultsGrid: document.getElementById("resultsGrid"),
+      analysisQuestionId: document.getElementById("analysisQuestionId"),
+      analysisSummary: document.getElementById("analysisSummary"),
+      analysisBatchCount: document.getElementById("analysisBatchCount"),
+      analysisDetail: document.getElementById("analysisDetail"),
+      heatGrid: document.getElementById("heatGrid"),
+      batchList: document.getElementById("batchList"),
+      toast: document.getElementById("toast")
+    };
+
+    function inferType(question) {
+      const text = String(question.question || "");
+      const options = Array.isArray(question.options) ? question.options : [];
+      if (text.includes("【填空】")) return "填空题";
+      if (text.includes("【不定项】") || text.includes("【单选】") || text.includes("【多选】")) return "选择题";
+      if (options.length === 2 && options.includes("是") && options.includes("否")) return "判断题";
+      if (options.length > 0) return "选择题";
+      return "简答题";
+    }
+
+    function normalizeQuestions() {
+      state.allQuestions = [...(QUIZ_DATA.questions || [])]
+        .map((question) => ({
+          ...question,
+          id: Number(question.id),
+          type: inferType(question),
+          options: Array.isArray(question.options) ? question.options : []
+        }))
+        .sort((a, b) => a.id - b.id);
+      state.filteredQuestions = [...state.allQuestions];
+    }
+
+    function countByType(questions) {
+      return questions.reduce((acc, item) => {
+        acc[item.type] = (acc[item.type] || 0) + 1;
+        return acc;
+      }, {});
+    }
+
+    function getEmptyAnswer(question) {
+      return question.type === "选择题" || question.type === "判断题" ? [] : "";
+    }
+
+    function isAnswerFilled(question, answer) {
+      if (question.type === "选择题" || question.type === "判断题") {
+        return Array.isArray(answer) && answer.length > 0;
+      }
+      return typeof answer === "string" && answer.trim() !== "";
+    }
+
+    function normalizeAnswerValue(question, value) {
+      if (question.type === "选择题" || question.type === "判断题") {
+        if (!Array.isArray(value)) return [];
+        return [...new Set(value.map((item) => Number(item)).filter(Number.isInteger))].sort((a, b) => a - b);
+      }
+      return typeof value === "string" ? value : String(value ?? "");
+    }
+
+    function getStoredAnswer(question) {
+      const stored = state.answers.get(question.id);
+      if (stored === undefined) return getEmptyAnswer(question);
+      return normalizeAnswerValue(question, stored);
+    }
+
+    function setAnswer(questionId, rawValue) {
+      const question = state.allQuestions.find((item) => item.id === questionId);
+      if (!question) return;
+      const value = normalizeAnswerValue(question, rawValue);
+      const emptyValue = getEmptyAnswer(question);
+      const isEmpty = JSON.stringify(value) === JSON.stringify(emptyValue) || (typeof value === "string" && value.trim() === "");
+      if (isEmpty) {
+        state.answers.delete(questionId);
+      } else {
+        state.answers.set(questionId, value);
+      }
+      persistAnswers();
+      renderSummary();
+      renderQuestions();
+    }
+
+    function persistAnswers() {
+      const payload = buildAnswerBookPayload();
+      localStorage.setItem("herculture-answer-book", JSON.stringify(payload));
+    }
+
+    function restoreAnswers() {
+      try {
+        const raw = localStorage.getItem("herculture-answer-book");
+        if (!raw) return;
+        applyImportedAnswers(JSON.parse(raw), false);
+      } catch (error) {
+        localStorage.removeItem("herculture-answer-book");
+      }
+    }
+
+    function buildAnswerMapObject(questionList = state.allQuestions) {
+      const result = {};
+      questionList.forEach((question) => {
+        if (!state.answers.has(question.id)) return;
+        result[String(question.id)] = getStoredAnswer(question);
+      });
+      return result;
+    }
+
+    function buildAnswerBookPayload(questionList = state.allQuestions) {
+      const answeredQuestions = questionList.filter((question) => state.answers.has(question.id));
+      return {
+        version: 1,
+        exported_at: new Date().toISOString(),
+        total_answered: answeredQuestions.length,
+        answers_by_id: buildAnswerMapObject(questionList),
+        entries: answeredQuestions.map((question) => ({
+          id: question.id,
+          type: question.type,
+          answer: getStoredAnswer(question)
+        }))
+      };
+    }
+
+    function buildApiAnswerPayload(questionList = state.filteredQuestions) {
+      return {
+        questions: questionList.map((question) => ({
+          id: question.id,
+          question: question.question,
+          options: question.options
+        })),
+        answers: questionList.map((question) => getStoredAnswer(question))
+      };
+    }
+
+    function normalizeImportedAnswerMap(payload) {
+      const result = new Map();
+      if (payload && typeof payload === "object" && !Array.isArray(payload.answers) && payload.answers_by_id && typeof payload.answers_by_id === "object") {
+        Object.entries(payload.answers_by_id).forEach(([id, answer]) => {
+          result.set(Number(id), answer);
+        });
+        return result;
+      }
+
+      if (payload && typeof payload === "object" && Array.isArray(payload.entries)) {
+        payload.entries.forEach((entry) => {
+          if (entry && Number.isInteger(Number(entry.id))) {
+            result.set(Number(entry.id), entry.answer);
+          }
+        });
+        return result;
+      }
+
+      if (payload && typeof payload === "object" && Array.isArray(payload.questions) && Array.isArray(payload.answers)) {
+        payload.questions.forEach((question, index) => {
+          const questionId = Number(question && question.id);
+          if (Number.isInteger(questionId) && index < payload.answers.length) {
+            result.set(questionId, payload.answers[index]);
+          }
+        });
+        return result;
+      }
+
+      throw new Error("答案 JSON 格式不符合预期");
+    }
+
+    function applyImportedAnswers(payload, notify = true) {
+      const imported = normalizeImportedAnswerMap(payload);
+      let loadedCount = 0;
+      imported.forEach((answer, questionId) => {
+        const question = state.allQuestions.find((item) => item.id === questionId);
+        if (!question) return;
+        const normalized = normalizeAnswerValue(question, answer);
+        const empty = getEmptyAnswer(question);
+        const isEmpty = JSON.stringify(normalized) === JSON.stringify(empty) || (typeof normalized === "string" && normalized.trim() === "");
+        if (isEmpty) {
+          state.answers.delete(questionId);
+          return;
+        }
+        state.answers.set(questionId, normalized);
+        loadedCount += 1;
+      });
+      persistAnswers();
+      renderSummary();
+      renderQuestions();
+      if (notify) showToast(`已导入 ${loadedCount} 条答案`);
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function renderSummary() {
+      const typeCount = countByType(state.allQuestions);
+      const cards = [
+        ["题目总数", state.allQuestions.length],
+        ["当前筛选", state.filteredQuestions.length],
+        ["题型数量", Object.keys(typeCount).length],
+        ["总采集请求", COLLECTION_META.attempts]
+      ];
+
+      elements.summaryGrid.innerHTML = cards.map(([label, value]) => `
+        <article class="stat-card">
+          <span class="stat-label">${label}</span>
+          <div class="stat-value">${escapeHtml(String(value))}</div>
+        </article>
+      `).join("");
+
+      elements.resultPill.textContent = `当前显示 ${state.filteredQuestions.length} / ${state.allQuestions.length}`;
+      elements.sortPill.textContent = elements.sortOrder.value === "asc" ? "按题号升序" : "按题号降序";
+      const answeredCount = state.allQuestions.filter((question) => state.answers.has(question.id)).length;
+      elements.answerSummary.innerHTML = [
+        `<span class="pill">已作答 ${answeredCount}</span>`,
+        `<span class="pill">未作答 ${state.allQuestions.length - answeredCount}</span>`
+      ].join("");
+      elements.typeSummary.innerHTML = Object.entries(typeCount)
+        .map(([label, value]) => `<span class="pill">${escapeHtml(label)} ${value}</span>`)
+        .join("");
+      elements.analysisStatus.textContent = COLLECTION_META.rawBatchHistoryAvailable
+        ? "已载入原始批次记录，可查看某题出现频率与来源批次。"
+        : `当前无法直接计算：${COLLECTION_META.reason}`;
+    }
+
+    function formatQuestion(question) {
+      const optionsText = question.options.length
+        ? question.options.map((option, index) => `${index + 1}. ${option}`).join("\n")
+        : "（无选项）";
+      const answer = state.answers.has(question.id) ? getStoredAnswer(question) : "（未作答）";
+      const answerText = Array.isArray(answer) ? JSON.stringify(answer) : answer;
+      return `题号：${question.id}\n题型：${question.type}\n题目：${question.question}\n选项：\n${optionsText}\n作答：${answerText}`;
+    }
+
+    function renderOptions(question) {
+      const answer = getStoredAnswer(question);
+
+      if (question.type !== "选择题" && question.type !== "判断题") {
+        return `<ul class="options">${question.options.map((option) => `<li>${escapeHtml(option)}</li>`).join("")}</ul>`;
+      }
+
+      const inputType = question.type === "判断题" ? "radio" : "checkbox";
+      return `
+        <ul class="options">
+          ${question.options.map((option, index) => {
+            const checked = Array.isArray(answer) && answer.includes(index);
+            return `
+              <li class="option-answerable">
+                <label class="${checked ? "is-checked" : ""}">
+                  <input type="${inputType}" name="answer-${question.id}" data-answer-input="${question.id}" data-option-index="${index}" ${checked ? "checked" : ""}>
+                  <span>${escapeHtml(option)}</span>
+                </label>
+              </li>
+            `;
+          }).join("")}
+        </ul>
+      `;
+    }
+
+    function renderTextAnswer(question) {
+      if (question.type === "选择题" || question.type === "判断题") {
+        return "";
+      }
+
+      const answer = getStoredAnswer(question);
+      return `
+        <div>
+          <textarea class="inline-text-answer" data-answer-text="${question.id}" placeholder="输入你的答案">${escapeHtml(answer)}</textarea>
+        </div>
+      `;
+    }
+
+    function renderQuestions() {
+      if (!state.filteredQuestions.length) {
+        elements.resultsGrid.innerHTML = `<div class="question-card"><div class="empty-note">没有符合当前筛选条件的题目。</div></div>`;
+        return;
+      }
+
+      elements.resultsGrid.innerHTML = state.filteredQuestions.map((question) => {
+        const highlighted = question.id === state.selectedQuestionId ? "highlight" : "";
+        const options = renderOptions(question);
+        const answered = isAnswerFilled(question, getStoredAnswer(question));
+
+        return `
+          <article class="question-card ${highlighted}" id="question-${question.id}" data-id="${question.id}">
+            <div class="question-top">
+              <div>
+                <div class="question-id">题号 ${question.id}</div>
+                <div class="meta-row">
+                  <span class="meta-chip">${escapeHtml(question.type)}</span>
+                  <span class="meta-chip">${question.options.length ? `${question.options.length} 个选项` : "无选项"}</span>
+                  <span class="meta-chip">${answered ? "已作答" : "未作答"}</span>
+                </div>
+              </div>
+              <div class="question-type">按数字排序</div>
+            </div>
+            <p class="question-text">${escapeHtml(question.question)}</p>
+            ${options}
+            ${renderTextAnswer(question)}
+            <div class="card-actions">
+              <button class="action-btn" type="button" data-action="copy" data-id="${question.id}">复制题目</button>
+              <button class="action-btn secondary" type="button" data-action="analyze" data-id="${question.id}">查看分析</button>
+              <button class="action-btn secondary" type="button" data-action="clear-answer" data-id="${question.id}">清空作答</button>
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function showToast(message) {
+      elements.toast.textContent = message;
+      elements.toast.classList.add("visible");
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => {
+        elements.toast.classList.remove("visible");
+      }, 1800);
+    }
+
+    async function copyText(text, successMessage) {
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast(successMessage);
+      } catch (error) {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        textarea.remove();
+        showToast(successMessage);
+      }
+    }
+
+    function csvEscape(value) {
+      const text = String(value ?? "");
+      return `"${text.replace(/"/g, '""')}"`;
+    }
+
+    function downloadFile(filename, content, type) {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      showToast(`已导出 ${filename}`);
+    }
+
+    function exportFiltered(format) {
+      const baseName = `quiz-filtered-${state.filteredQuestions.length}`;
+      if (format === "json") {
+        const payload = state.filteredQuestions.map((question) => ({
+          id: question.id,
+          type: question.type,
+          question: question.question,
+          options: question.options,
+          answer: state.answers.has(question.id) ? getStoredAnswer(question) : getEmptyAnswer(question)
+        }));
+        downloadFile(`${baseName}.json`, JSON.stringify(payload, null, 2), "application/json;charset=utf-8");
+        return;
+      }
+
+      if (format === "txt") {
+        downloadFile(`${baseName}.txt`, state.filteredQuestions.map(formatQuestion).join("\n\n---\n\n"), "text/plain;charset=utf-8");
+        return;
+      }
+
+      const csvRows = [
+        ["id", "type", "question", "options", "answer"],
+        ...state.filteredQuestions.map((item) => [item.id, item.type, item.question, item.options.join(" | "), JSON.stringify(state.answers.has(item.id) ? getStoredAnswer(item) : getEmptyAnswer(item))])
+      ];
+      const csv = csvRows.map((row) => row.map(csvEscape).join(",")).join("\n");
+      downloadFile(`${baseName}.csv`, csv, "text/csv;charset=utf-8");
+    }
+
+    function applyFilters() {
+      const term = elements.searchInput.value.trim().toLowerCase();
+      const type = elements.typeFilter.value;
+      const answerStatus = elements.answerStatusFilter.value;
+      const order = elements.sortOrder.value;
+
+      state.filteredQuestions = state.allQuestions
+        .filter((item) => {
+          const haystacks = [item.question, ...item.options].map((value) => String(value).toLowerCase());
+          const matchesTerm = !term || haystacks.some((value) => value.includes(term));
+          const matchesType = type === "all" || item.type === type;
+          const answered = isAnswerFilled(item, getStoredAnswer(item));
+          const matchesAnswerStatus = answerStatus === "all"
+            || (answerStatus === "answered" && answered)
+            || (answerStatus === "unanswered" && !answered);
+          return matchesTerm && matchesType && matchesAnswerStatus;
+        })
+        .sort((a, b) => order === "asc" ? a.id - b.id : b.id - a.id);
+
+      renderSummary();
+      renderQuestions();
+      renderAnalysis(state.selectedQuestionId);
+    }
+
+    function jumpToQuestion() {
+      const targetId = Number(elements.jumpInput.value);
+      if (!Number.isInteger(targetId)) {
+        elements.jumpFeedback.textContent = "请输入有效题号。";
+        return;
+      }
+
+      let question = state.filteredQuestions.find((item) => item.id === targetId);
+      if (!question) {
+        elements.searchInput.value = "";
+        elements.typeFilter.value = "all";
+        applyFilters();
+        question = state.filteredQuestions.find((item) => item.id === targetId);
+      }
+
+      if (!question) {
+        elements.jumpFeedback.textContent = `未找到题号 ${targetId}。`;
+        return;
+      }
+
+      state.selectedQuestionId = targetId;
+      renderQuestions();
+      renderAnalysis(targetId);
+      const target = document.getElementById(`question-${targetId}`);
+      if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+      elements.jumpFeedback.textContent = `已跳转到题号 ${targetId}。`;
+      showToast(`已定位题号 ${targetId}`);
+    }
+
+    function normalizeBatchPayload(payload) {
+      const source = Array.isArray(payload) ? payload : Array.isArray(payload.batches) ? payload.batches : null;
+      if (!source) {
+        throw new Error("JSON 格式不符合预期：需要数组，或 { batches: [...] }");
+      }
+
+      return source.map((batch, index) => {
+        const token = batch.token || batch.batch_token || batch.id || `batch-${index + 1}`;
+        const timestamp = batch.timestamp || batch.created_at || batch.time || "";
+        const batchIndex = Number(batch.batch_index || batch.index || (index + 1));
+        const rawQuestions = Array.isArray(batch.questions) ? batch.questions : [];
+        const questionIds = Array.isArray(batch.question_ids)
+          ? batch.question_ids.map((value) => Number(value)).filter(Number.isFinite)
+          : rawQuestions.map((item) => Number(item.id)).filter(Number.isFinite);
+
+        return {
+          index: batchIndex,
+          token: String(token),
+          timestamp: String(timestamp || ""),
+          questionIds
+        };
+      });
+    }
+
+    function indexRawBatches(batches) {
+      const index = new Map();
+      batches.forEach((batch) => {
+        batch.questionIds.forEach((questionId) => {
+          if (!index.has(questionId)) index.set(questionId, []);
+          index.get(questionId).push(batch);
+        });
+      });
+
+      state.rawBatchHistory = batches;
+      state.rawBatchIndex = index;
+      COLLECTION_META.rawBatchHistoryAvailable = true;
+      COLLECTION_META.reason = "";
+      renderSummary();
+      renderAnalysis(state.selectedQuestionId);
+      showToast(`已载入 ${batches.length} 个原始批次`);
+    }
+
+    function clearHeatmap() {
+      state.selectedQuestionId = null;
+      elements.analysisQuestionId.textContent = "未选中题目";
+      elements.analysisSummary.textContent = COLLECTION_META.rawBatchHistoryAvailable
+        ? "已载入原始批次记录。点击左侧“计算热力分布图”或任意题目的“查看分析”开始计算。"
+        : "当前没有原始批次数据，因此无法计算单题出现频率。";
+      elements.analysisBatchCount.textContent = "0 个批次";
+      elements.analysisDetail.textContent = COLLECTION_META.rawBatchHistoryAvailable
+        ? "当前热力图已清空。"
+        : "如果你之后拿到批次原文，请直接导入 JSON。支持 { batches: [...] } 或批次数组。";
+      elements.heatGrid.innerHTML = "";
+      elements.batchList.innerHTML = "";
+      renderQuestions();
+    }
+
+    function calculateHeatmap() {
+      if (!COLLECTION_META.rawBatchHistoryAvailable || !state.rawBatchHistory || !state.rawBatchHistory.length) {
+        elements.analysisStatus.textContent = `当前无法直接计算：${COLLECTION_META.reason}`;
+        showToast("请先导入原始批次 JSON");
+        return;
+      }
+
+      const current = state.selectedQuestionId
+        ? state.allQuestions.find((item) => item.id === state.selectedQuestionId)
+        : null;
+      if (current) {
+        renderAnalysis(current.id);
+        showToast(`已计算题号 ${current.id} 的热力分布图`);
+        return;
+      }
+
+      const firstCandidate = state.filteredQuestions.find((item) => state.rawBatchIndex.has(item.id))
+        || state.allQuestions.find((item) => state.rawBatchIndex.has(item.id));
+
+      if (!firstCandidate) {
+        elements.analysisSummary.textContent = "已载入原始批次，但当前数据里没有能匹配到题库题号的记录。";
+        elements.analysisDetail.textContent = "请检查导入的 question_ids 是否与题库中的 id 一致。";
+        elements.analysisBatchCount.textContent = "0 个批次";
+        elements.heatGrid.innerHTML = "";
+        elements.batchList.innerHTML = "";
+        showToast("没有可用于绘制的匹配题目");
+        return;
+      }
+
+      renderAnalysis(firstCandidate.id);
+      showToast(`已计算题号 ${firstCandidate.id} 的热力分布图`);
+    }
+
+    function renderAnalysis(questionId) {
+      const question = state.allQuestions.find((item) => item.id === questionId) || null;
+
+      if (!question) {
+        elements.analysisQuestionId.textContent = "未选中题目";
+        elements.analysisSummary.textContent = COLLECTION_META.rawBatchHistoryAvailable
+          ? "点击任意题目卡片上的“查看分析”来查看它在原始批次中的分布。"
+          : "当前没有原始批次数据，因此无法计算单题出现频率。";
+        elements.analysisBatchCount.textContent = "0 个批次";
+        elements.analysisDetail.textContent = COLLECTION_META.rawBatchHistoryAvailable
+          ? "载入原始批次后，可查看某题出现次数、出现批次、批次 token 与时间。"
+          : "如果你之后拿到批次原文，请直接导入 JSON。支持 { batches: [...] } 或批次数组。";
+        elements.heatGrid.innerHTML = "";
+        elements.batchList.innerHTML = "";
+        return;
+      }
+
+      state.selectedQuestionId = question.id;
+
+      if (!COLLECTION_META.rawBatchHistoryAvailable) {
+        elements.analysisQuestionId.textContent = `题号 ${question.id}`;
+        elements.analysisSummary.textContent = `题号 ${question.id} 已选中，但当前没有原始批次记录，因此无法计算出现频率。`;
+        elements.analysisBatchCount.textContent = "0 个批次";
+        elements.analysisDetail.textContent = "现有文件只有去重题库与总状态；要算频率/来源批次，必须保留每一批返回的题目列表。";
+        elements.heatGrid.innerHTML = "";
+        elements.batchList.innerHTML = "";
+        renderQuestions();
+        return;
+      }
+
+      const batches = state.rawBatchIndex.get(question.id) || [];
+      const total = state.rawBatchHistory.length || 1;
+      const ratio = batches.length / total;
+
+      elements.analysisQuestionId.textContent = `题号 ${question.id}`;
+      elements.analysisSummary.textContent = `题号 ${question.id} 共出现在 ${batches.length} / ${total} 个批次中，出现频率 ${(ratio * 100).toFixed(1)}%。`;
+      elements.analysisBatchCount.textContent = `${batches.length} 个批次`;
+      elements.analysisDetail.textContent = batches.length
+        ? "下面按批次显示该题出现位置，颜色越深代表命中该批次。"
+        : "已载入原始批次，但这道题没有出现在当前导入的数据中。";
+
+      elements.heatGrid.innerHTML = state.rawBatchHistory.map((batch) => {
+        const active = batches.some((item) => item.index === batch.index);
+        const intensity = active ? 0.25 + (0.55 * Math.max(0.2, ratio)) : 0.06;
+        const background = active ? `rgba(179, 74, 46, ${intensity})` : "rgba(179, 74, 46, 0.06)";
+        const suffix = batch.timestamp ? ` / ${escapeHtml(batch.timestamp)}` : "";
+        const hit = active ? " / 命中" : "";
+        return `<div class="heat-cell" title="批次 ${batch.index}${suffix}${hit}" style="background:${background}"><span>${batch.index}</span></div>`;
+      }).join("");
+
+      elements.batchList.innerHTML = batches.length
+        ? batches.map((batch) => {
+          const timeText = batch.timestamp ? ` · ${escapeHtml(batch.timestamp)}` : "";
+          const tokenText = batch.token ? ` · ${escapeHtml(batch.token.slice(0, 12))}` : "";
+          return `<span class="batch-tag">批次 ${batch.index}${timeText}${tokenText}</span>`;
+        }).join("")
+        : "";
+
+      renderQuestions();
+    }
+
+    function bindEvents() {
+      elements.searchInput.addEventListener("input", applyFilters);
+      elements.typeFilter.addEventListener("change", applyFilters);
+      elements.answerStatusFilter.addEventListener("change", applyFilters);
+      elements.sortOrder.addEventListener("change", applyFilters);
+      elements.jumpButton.addEventListener("click", jumpToQuestion);
+      elements.jumpInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") jumpToQuestion();
+      });
+
+      elements.resetButton.addEventListener("click", () => {
+        elements.searchInput.value = "";
+        elements.typeFilter.value = "all";
+        elements.answerStatusFilter.value = "all";
+        elements.sortOrder.value = "asc";
+        elements.jumpInput.value = "";
+        state.selectedQuestionId = null;
+        applyFilters();
+        elements.jumpFeedback.textContent = "筛选条件已重置。";
+      });
+
+      elements.copyFilteredButton.addEventListener("click", () => {
+        const text = state.filteredQuestions.map(formatQuestion).join("\n\n---\n\n");
+        copyText(text || "当前没有筛选结果。", "已复制当前筛选结果");
+      });
+
+      elements.exportAnswerBookButton.addEventListener("click", () => {
+        downloadFile("quiz-answer-book.json", JSON.stringify(buildAnswerBookPayload(), null, 2), "application/json;charset=utf-8");
+      });
+
+      elements.exportApiAnswersButton.addEventListener("click", () => {
+        downloadFile("quiz-api-answers.json", JSON.stringify(buildApiAnswerPayload(), null, 2), "application/json;charset=utf-8");
+      });
+
+      elements.clearAnswersButton.addEventListener("click", () => {
+        state.answers.clear();
+        persistAnswers();
+        renderSummary();
+        renderQuestions();
+        showToast("已清空全部作答");
+      });
+
+      elements.calculateHeatmapButton.addEventListener("click", calculateHeatmap);
+      elements.clearHeatmapButton.addEventListener("click", () => {
+        clearHeatmap();
+        showToast("已清空热力图");
+      });
+
+      elements.exportJsonButton.addEventListener("click", () => exportFiltered("json"));
+      elements.exportCsvButton.addEventListener("click", () => exportFiltered("csv"));
+      elements.exportTxtButton.addEventListener("click", () => exportFiltered("txt"));
+
+      elements.resultsGrid.addEventListener("change", (event) => {
+        const textInput = event.target.closest("textarea[data-answer-text]");
+        if (textInput) {
+          setAnswer(Number(textInput.dataset.answerText), textInput.value);
+          return;
+        }
+
+        const choiceInput = event.target.closest("input[data-answer-input]");
+        if (!choiceInput) return;
+        const questionId = Number(choiceInput.dataset.answerInput);
+        const optionIndex = Number(choiceInput.dataset.optionIndex);
+        const question = state.allQuestions.find((item) => item.id === questionId);
+        if (!question) return;
+
+        if (question.type === "判断题") {
+          setAnswer(questionId, choiceInput.checked ? [optionIndex] : []);
+          return;
+        }
+
+        const selected = [...elements.resultsGrid.querySelectorAll(`input[data-answer-input="${questionId}"]:checked`)]
+          .map((input) => Number(input.dataset.optionIndex))
+          .filter(Number.isInteger)
+          .sort((a, b) => a - b);
+        setAnswer(questionId, selected);
+      });
+
+      elements.resultsGrid.addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-action]");
+        if (!button) return;
+
+        const id = Number(button.dataset.id);
+        const question = state.allQuestions.find((item) => item.id === id);
+        if (!question) return;
+
+        if (button.dataset.action === "copy") {
+          copyText(formatQuestion(question), `已复制题号 ${id}`);
+          return;
+        }
+
+        if (button.dataset.action === "clear-answer") {
+          setAnswer(id, getEmptyAnswer(question));
+          showToast(`已清空题号 ${id} 的作答`);
+          return;
+        }
+
+        if (button.dataset.action === "analyze") {
+          renderAnalysis(id);
+          const target = document.getElementById(`question-${id}`);
+          if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+          showToast(`正在查看题号 ${id} 的分析`);
+        }
+      });
+
+      elements.rawBatchInput.addEventListener("change", async (event) => {
+        const file = event.target.files && event.target.files[0];
+        if (!file) return;
+
+        try {
+          const text = await file.text();
+          const payload = JSON.parse(text);
+          const batches = normalizeBatchPayload(payload);
+          indexRawBatches(batches);
+        } catch (error) {
+          showToast("原始批次导入失败");
+          elements.analysisStatus.textContent = `导入失败：${error.message}`;
+        }
+      });
+
+      elements.answerImportInput.addEventListener("change", async (event) => {
+        const file = event.target.files && event.target.files[0];
+        if (!file) return;
+
+        try {
+          const text = await file.text();
+          applyImportedAnswers(JSON.parse(text));
+        } catch (error) {
+          showToast("答案导入失败");
+        }
+      });
+    }
+
+    function init() {
+      normalizeQuestions();
+      restoreAnswers();
+      bindEvents();
+      applyFilters();
+    }
+
+    init();
+  </script>
+</body>
+</html>
