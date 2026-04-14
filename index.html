@@ -545,9 +545,7 @@
 <body>
   <div class="page-shell">
     <header class="hero">
-      <div class="hero-kicker">本地静态题库 / 无需服务器</div>
       <h1>她文娱题库总览</h1>
-      <p>当前页面已将题库直接嵌入 HTML。你可以直接双击打开，按题号跳转、搜索筛选、复制单题，或导出当前筛选结果；所有卡片按题号数字顺序排列，不再出现 seq-1 / seq-11 这种字符串排序问题。</p>
       <section class="summary-grid" id="summaryGrid"></section>
     </header>
 
@@ -960,7 +958,6 @@
         .join("");
       elements.analysisStatus.textContent = COLLECTION_META.rawBatchHistoryAvailable
         ? "已载入原始批次记录，可查看某题出现频率与来源批次。"
-        : `当前无法直接计算：${COLLECTION_META.reason}`;
     }
 
     function formatQuestion(question) {
